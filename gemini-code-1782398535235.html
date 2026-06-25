@@ -1,0 +1,1375 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduFocus - Professional Study Planner & Tracker</title>
+    <style>
+        :root {
+            --bg-main: #0f172a;
+            --bg-card: rgba(30, 41, 59, 0.7);
+            --border-color: rgba(255, 255, 255, 0.1);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --glass-blur: blur(12px);
+        }
+
+        .light {
+            --bg-main: #f1f5f9;
+            --bg-card: rgba(255, 255, 255, 0.8);
+            --border-color: rgba(0, 0, 0, 0.1);
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --success: #059669;
+            --warning: #d97706;
+            --danger: #dc2626;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            transition: background-color 0.3s, border-color 0.3s, color 0.3s;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        [dir="rtl"] {
+            font-family: 'Segoe UI', Arial, sans-serif;
+        }
+
+        .glass-card {
+            background: var(--bg-card);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--border-color);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .grid-layout {
+            display: grid;
+            grid-template-columns: 260px 1fr;
+            min-height: 100vh;
+        }
+
+        @media (max-width: 1024px) {
+            .grid-layout {
+                grid-template-columns: 1fr;
+            }
+            .sidebar {
+                display: none !important;
+            }
+            .mobile-nav {
+                display: flex !important;
+            }
+        }
+
+        /* Utility classes to mirror standard design utility Frameworks */
+        .flex { display: flex; }
+        .flex-col { flex-direction: column; }
+        .items-center { align-items: center; }
+        .justify-between { justify-content: space-between; }
+        .justify-center { justify-content: center; }
+        .grid { display: grid; }
+        .gap-4 { gap: 1rem; }
+        .gap-6 { gap: 1.5rem; }
+        .w-full { width: 100%; }
+        .hidden { display: none !important; }
+        
+        .sidebar {
+            background: var(--bg-card);
+            border-right: 1px solid var(--border-color);
+            padding: 2rem 1rem;
+        }
+
+        .nav-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            color: var(--text-muted);
+            border-radius: 0.5rem;
+            cursor: pointer;
+            text-decoration: none;
+            margin-bottom: 0.5rem;
+            border: none;
+            background: transparent;
+            width: 100%;
+            font-size: 1rem;
+            text-align: left;
+        }
+
+        [dir="rtl"] .nav-btn {
+            text-align: right;
+        }
+
+        .nav-btn.active, .nav-btn:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .main-content {
+            padding: 2rem;
+            overflow-y: auto;
+            max-height: 100vh;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-hover); }
+        .btn-success { background: var(--success); color: white; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-secondary { background: var(--text-muted); color: var(--bg-main); }
+
+        .input-field {
+            background: rgba(0,0,0,0.05);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            outline: none;
+            width: 100%;
+        }
+        .dark .input-field {
+            background: rgba(255,255,255,0.05);
+        }
+
+        /* Circle Progress Ring */
+        .progress-ring__circle {
+            transition: stroke-dashoffset 0.35s;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+
+        /* Calendar Grid */
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+        }
+        .calendar-day {
+            min-height: 90px;
+            border: 1px solid var(--border-color);
+            padding: 5px;
+            border-radius: 0.25rem;
+        }
+
+        /* Fullscreen Focus Overlay */
+        #fullscreenFocus {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: #000; z-index: 9999;
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="authContainer" class="flex items-center justify-center" style="min-height: 100vh; padding: 2rem;">
+        <div class="glass-card w-full" style="max-width: 450px;">
+            <div id="authLogo" class="flex flex-col items-center gap-4" style="text-align: center; margin-bottom: 2rem;">
+                <h1 style="font-size: 2rem; font-weight: 800; color: var(--primary);">EduFocus</h1>
+                <p id="authSubtitle" style="color: var(--text-muted);">Secure Offline Study Suite</p>
+            </div>
+
+            <div id="loginFormView">
+                <div class="flex flex-col gap-4">
+                    <label id="lblPin" style="font-weight: 600;">Enter your 4-Digit Access PIN</label>
+                    <input type="password" id="loginPin" class="input-field" maxlength="4" placeholder="••••" style="text-align: center; font-size: 1.5rem; letter-spacing: 0.5rem;">
+                    <button class="btn btn-primary w-full justify-center" onclick="handleLogin()" id="btnLogin">Unlock Dashboard</button>
+                    <div class="flex justify-between" style="margin-top: 1rem; font-size: 0.875rem;">
+                        <span style="color: var(--primary); cursor: pointer;" onclick="switchAuthView('forgot')" id="btnForgot">Forgot PIN?</span>
+                        <span style="color: var(--success); cursor: pointer;" onclick="switchAuthView('register')" id="btnCreateProfile">Create Profile</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="registerFormView" class="hidden">
+                <div class="flex flex-col gap-4">
+                    <h3 id="regTitle">Create Student Profile</h3>
+                    <input type="text" id="regName" class="input-field" placeholder="Full Name">
+                    <input type="password" id="regPin" class="input-field" maxlength="4" placeholder="Choose 4-Digit PIN (e.g. 1234)">
+                    <input type="text" id="regSecurityQ" class="input-field" placeholder="Security Question: Your first school?">
+                    <input type="text" id="regSecurityA" class="input-field" placeholder="Security Answer">
+                    <button class="btn btn-success w-full justify-center" onclick="handleRegistration()" id="btnSubmitReg">Register Locally</button>
+                    <button class="btn btn-secondary w-full justify-center" onclick="switchAuthView('login')" id="btnBackLogin">Back to Login</button>
+                </div>
+            </div>
+
+            <div id="forgotFormView" class="hidden">
+                <div class="flex flex-col gap-4">
+                    <h3 id="forgotTitle">Reset Access Security</h3>
+                    <p id="forgotHint" style="font-size: 0.875rem; color: var(--text-muted);">Answer your configured security question to view or modify parameters.</p>
+                    <div id="securityQuestionDisplay" style="font-weight: 600; padding: 0.5rem 0;"></div>
+                    <input type="text" id="forgotAnswer" class="input-field" placeholder="Your Answer">
+                    <input type="password" id="newPin" class="input-field" maxlength="4" placeholder="New 4-Digit PIN">
+                    <button class="btn btn-primary w-full justify-center" onclick="handleResetPin()" id="btnResetSubmit">Verify & Save</button>
+                    <button class="btn btn-secondary w-full justify-center" onclick="switchAuthView('login')" id="btnForgotBack">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="appWorkspace" class="grid-layout hidden">
+        <aside class="sidebar flex flex-col justify-between">
+            <div>
+                <div style="margin-bottom: 2rem; padding: 0 1rem;">
+                    <h2 style="font-weight: 800; color: var(--primary);">EduFocus</h2>
+                    <span id="studentNameBadge" style="font-size: 0.85rem; color: var(--text-muted);">Welcome Back</span>
+                </div>
+                <nav>
+                    <button class="nav-btn active" onclick="switchTab('dashboard', this)" id="tabDash"><span class="icon">📊</span> <span class="nav-text">Dashboard</span></button>
+                    <button class="nav-btn" onclick="switchTab('focus', this)" id="tabFocus"><span class="icon">⏱️</span> <span class="nav-text">Focus Clock</span></button>
+                    <button class="nav-btn" onclick="switchTab('calendar', this)" id="tabCal"><span class="icon">📅</span> <span class="nav-text">Planner Calendar</span></button>
+                    <button class="nav-btn" onclick="switchTab('subjects', this)" id="tabSubj"><span class="icon">📚</span> <span class="nav-text">Subjects</span></button>
+                    <button class="nav-btn" onclick="switchTab('analytics', this)" id="tabAnly"><span class="icon">📈</span> <span class="nav-text">Analytics</span></button>
+                    <button class="nav-btn" onclick="switchTab('settings', this)" id="tabSett"><span class="icon">⚙️</span> <span class="nav-text">Settings</span></button>
+                </nav>
+            </div>
+            
+            <div class="flex flex-col gap-2" style="padding: 1rem;">
+                <button class="btn btn-danger w-full justify-center" onclick="logOut()" id="btnLogOut">Lock Panel</button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="flex justify-between items-center" style="margin-bottom: 2rem; gap: 1rem; flex-wrap: wrap;">
+                <div>
+                    <h1 id="pageTitle" style="font-size: 1.75rem; font-weight: 700;">Dashboard Workspace</h1>
+                    <p id="motivationalQuote" style="font-size: 0.9rem; color: var(--text-muted); font-style: italic;">"Your focus determines your reality."</p>
+                </div>
+                <div class="glass-card flex items-center gap-4" style="padding: 0.5rem 1rem; border-radius: 0.75rem;">
+                    <div style="text-align: right;">
+                        <div id="liveClock" style="font-size: 1.25rem; font-weight: 700; letter-spacing: 1px;">00:00:00 AM</div>
+                        <div id="liveDate" style="font-size: 0.8rem; color: var(--text-muted);">June 25, 2026</div>
+                    </div>
+                </div>
+            </header>
+
+            <div id="pane-dashboard" class="tab-pane flex flex-col gap-6">
+                <div class="grid gap-4" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
+                    <div class="glass-card flex items-center gap-4">
+                        <div style="font-size: 2.5rem; color: var(--primary);">⏱️</div>
+                        <div>
+                            <p style="color: var(--text-muted); font-size: 0.85rem;" id="cardTodayHours">Today's Focus</p>
+                            <h3 style="font-size: 1.5rem;" id="dashTodayHours">0.0 hrs</h3>
+                        </div>
+                    </div>
+                    <div class="glass-card flex items-center gap-4">
+                        <div style="font-size: 2.5rem; color: var(--success);">🔥</div>
+                        <div>
+                            <p style="color: var(--text-muted); font-size: 0.85rem;" id="cardStreak">Current Streak</p>
+                            <h3 style="font-size: 1.5rem;" id="dashStreak">0 Days</h3>
+                        </div>
+                    </div>
+                    <div class="glass-card flex items-center gap-4">
+                        <div style="font-size: 2.5rem; color: var(--warning);">🎯</div>
+                        <div>
+                            <p style="color: var(--text-muted); font-size: 0.85rem;" id="cardGoal">Daily Goal Target</p>
+                            <h3 style="font-size: 1.5rem;" id="dashGoalProgress">0%</h3>
+                        </div>
+                    </div>
+                    <div class="glass-card flex items-center gap-4">
+                        <div style="font-size: 2.5rem; color: #a855f7;">🏅</div>
+                        <div>
+                            <p style="color: var(--text-muted); font-size: 0.85rem;" id="cardBadges">Unlocked Milestones</p>
+                            <h3 style="font-size: 1.5rem;" id="dashBadgesCount">0 Badges</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid gap-6" style="grid-template-columns: 2fr 1fr; min-width: 0;">
+                    <div class="glass-card flex flex-col gap-4">
+                        <h3 id="dashTargetTracking">Target Multi-Level Milestones</h3>
+                        
+                        <div>
+                            <div class="flex justify-between" style="font-size: 0.85rem; margin-bottom: 0.25rem;">
+                                <span id="lblDailyProgress">Daily Target Progress</span>
+                                <span id="txtDailyGoalProgress">0/0 hrs</span>
+                            </div>
+                            <div style="width: 100%; height: 8px; background: rgba(0,0,0,0.1); border-radius: 4px; overflow: hidden;">
+                                <div id="barDailyProgress" style="width: 0%; height: 100%; background: var(--primary); transition: width 0.4s;"></div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between" style="font-size: 0.85rem; margin-bottom: 0.25rem;">
+                                <span id="lblWeeklyProgress">Weekly Target Progress</span>
+                                <span id="txtWeeklyGoalProgress">0/0 hrs</span>
+                            </div>
+                            <div style="width: 100%; height: 8px; background: rgba(0,0,0,0.1); border-radius: 4px; overflow: hidden;">
+                                <div id="barWeeklyProgress" style="width: 0%; height: 100%; background: var(--success); transition: width 0.4s;"></div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between" style="font-size: 0.85rem; margin-bottom: 0.25rem;">
+                                <span id="lblMonthlyProgress">Monthly Target Progress</span>
+                                <span id="txtMonthlyGoalProgress">0/0 hrs</span>
+                            </div>
+                            <div style="width: 100%; height: 8px; background: rgba(0,0,0,0.1); border-radius: 4px; overflow: hidden;">
+                                <div id="barMonthlyProgress" style="width: 0%; height: 100%; background: var(--warning); transition: width 0.4s;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="glass-card flex flex-col gap-4 justify-between">
+                        <h3 id="dashActiveBadge">Current Rank</h3>
+                        <div class="flex flex-col items-center justify-center" style="padding: 1rem 0; text-align: center;">
+                            <div id="badgeDisplayGraphic" style="font-size: 4rem; margin-bottom: 0.5rem;">🌱</div>
+                            <h4 id="badgeRankName" style="font-weight: 700;">Novice Scholar</h4>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card">
+                    <h3 style="margin-bottom: 1rem;" id="lblRecentSessions">Recent Historical Focus Logs</h3>
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse; text-align: left;" id="tableRecentSessions">
+                            <thead>
+                                <tr style="border-bottom: 2px solid var(--border-color); color: var(--text-muted);">
+                                    <th style="padding: 0.75rem;" id="thSubject">Subject</th>
+                                    <th style="padding: 0.75rem;" id="thDate">Date</th>
+                                    <th style="padding: 0.75rem;" id="thDuration">Duration</th>
+                                    <th style="padding: 0.75rem;" id="thStatus">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentSessionsLogBody">
+                                </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="pane-focus" class="tab-pane hidden flex flex-col gap-6">
+                <div class="grid gap-6" style="grid-template-columns: 1fr 1.5fr;">
+                    <div class="glass-card flex flex-col gap-4">
+                        <h3 id="lblTimerConfig">Configuration Setup</h3>
+                        
+                        <div class="flex flex-col gap-2">
+                            <label id="lblSelectSubject" style="font-size: 0.9rem;">Target Core Subject</label>
+                            <select id="timerSubjectSelect" class="input-field"></select>
+                        </div>
+
+                        <div class="flex flex-col gap-2">
+                            <label id="lblSelectMode" style="font-size: 0.9rem;">Interval Mode Strategy</label>
+                            <div class="grid gap-2" style="grid-template-columns: 1fr 1fr;">
+                                <button class="btn btn-secondary justify-center" style="font-size: 0.85rem;" onclick="setTimerStrategy('pomodoro')">Pomodoro (25m)</button>
+                                <button class="btn btn-secondary justify-center" style="font-size: 0.85rem;" onclick="setTimerStrategy('deep')">Deep Study (50m)</button>
+                                <button class="btn btn-secondary justify-center" style="font-size: 0.85rem;" onclick="setTimerStrategy('stopwatch')">Stopwatch (+)</button>
+                                <button class="btn btn-secondary justify-center" style="font-size: 0.85rem;" onclick="setTimerStrategy('custom')">Custom Fixed</button>
+                            </div>
+                        </div>
+
+                        <div id="customTimerInputs" class="hidden flex flex-col gap-2">
+                            <label id="lblCustomMinutes" style="font-size: 0.85rem;">Target Duration Minutes</label>
+                            <input type="number" id="customMinutesInput" class="input-field" value="30" min="1" max="300">
+                        </div>
+
+                        <div class="flex flex-col gap-2" style="margin-top: 1rem;">
+                            <label class="flex items-center gap-2" style="font-size: 0.85rem; cursor: pointer;">
+                                <input type="checkbox" id="chkAudioAlerts" checked> <span id="lblAudioToggle">Enable Sound Signals</span>
+                            </label>
+                        </div>
+
+                        <button class="btn btn-primary w-full justify-center" onclick="toggleFullscreenFocus()" id="btnTriggerFullscreen" style="margin-top: auto;">🖥️ Enter Fullscreen Immersive</button>
+                    </div>
+
+                    <div class="glass-card flex flex-col items-center justify-center" style="position: relative; min-height: 350px;">
+                        <div style="position: relative; width: 240px; height: 240px;">
+                            <svg width="240" height="240">
+                                <circle stroke="rgba(0,0,0,0.1)" stroke-width="12" fill="transparent" r="100" cx="120" cy="120"/>
+                                <circle id="timerProgressCircle" stroke="var(--primary)" stroke-width="12" fill="transparent" r="100" cx="120" cy="120" class="progress-ring__circle" stroke-dasharray="628.318" stroke-dashoffset="0"/>
+                            </svg>
+                            <div style="position: absolute; top:0; left:0; width:100%; height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center;">
+                                <div id="timerClockDigits" style="font-size: 3rem; font-weight: 800; font-variant-numeric: tabular-nums;">25:00</div>
+                                <div id="timerModeLabel" style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase;">Pomodoro</div>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-4" style="margin-top: 2rem;">
+                            <button class="btn btn-success" id="btnClockStart" onclick="startCoreTimer()">Play</button>
+                            <button class="btn btn-secondary hidden" id="btnClockPause" onclick="pauseCoreTimer()">Pause</button>
+                            <button class="btn btn-danger" id="btnClockStop" onclick="stopCoreTimer()">Stop/Log</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card flex flex-col gap-2">
+                    <label id="lblSessionNotes" style="font-weight: 600;">Active Session Notes & Workspace Objectives</label>
+                    <textarea id="txtSessionNotes" class="input-field" rows="3" placeholder="Document targeted specific workflows or concepts tackled dynamically..."></textarea>
+                </div>
+            </div>
+
+            <div id="pane-calendar" class="tab-pane hidden flex flex-col gap-6">
+                <div class="glass-card flex justify-between items-center" style="flex-wrap: wrap; gap: 1rem;">
+                    <div class="flex items-center gap-4">
+                        <button class="btn btn-secondary" onclick="adjustCalendarMonth(-1)">◀</button>
+                        <h2 id="calendarMonthYearDisplay" style="font-weight: 700; min-width: 150px; text-align: center;">Month Year</h2>
+                        <button class="btn btn-secondary" onclick="adjustCalendarMonth(1)">▶</button>
+                    </div>
+                    <div class="flex gap-2">
+                        <button class="btn btn-primary" onclick="openPlanModal()" id="btnNewPlan">+ Add Objective Event</button>
+                    </div>
+                </div>
+
+                <div class="glass-card" style="overflow-x: auto;">
+                    <div class="calendar-grid" style="font-weight: 700; text-align: center; margin-bottom: 0.5rem; color: var(--text-muted);" id="calendarHeaderDays">
+                        <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+                    </div>
+                    <div class="calendar-grid" id="calendarDaysContainer">
+                        </div>
+                </div>
+            </div>
+
+            <div id="pane-subjects" class="tab-pane hidden flex flex-col gap-6">
+                <div class="glass-card">
+                    <h3 style="margin-bottom: 1rem;" id="lblAddNewSubject">Add New Academic Discipline Subject</h3>
+                    <div class="grid gap-4" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); items-content: flex-end;">
+                        <div class="flex flex-col gap-1">
+                            <label id="lblSubjName" style="font-size: 0.85rem;">Subject Identification Title</label>
+                            <input type="text" id="newSubjTitle" class="input-field" placeholder="e.g. Advanced Calculus">
+                        </div>
+                        <div class="flex flex-col gap-1">
+                            <label id="lblSubjTarget" style="font-size: 0.85rem;">Target Workload Hours (Monthly)</label>
+                            <input type="number" id="newSubjTargetHours" class="input-field" value="20" min="1">
+                        </div>
+                        <div class="flex flex-col gap-1">
+                            <label id="lblSubjColor" style="font-size: 0.85rem;">Theme Palette Color</label>
+                            <input type="color" id="newSubjColor" class="input-field" value="#3b82f6" style="padding:0.25rem; height:42px;">
+                        </div>
+                        <button class="btn btn-success justify-center" onclick="createNewSubject()" id="btnSaveSubject">Save System Discipline</button>
+                    </div>
+                </div>
+
+                <div class="grid gap-4" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));" id="subjectsCardWrapperGrid">
+                    </div>
+            </div>
+
+            <div id="pane-analytics" class="tab-pane hidden flex flex-col gap-6">
+                <div class="glass-card flex justify-between items-center" style="flex-wrap: wrap; gap: 1rem;">
+                    <h2 id="lblAnalyticsSuite">Statistical Reporting Suite</h2>
+                    <button class="btn btn-primary" onclick="window.print()" id="btnPrintReport">🖨️ Generate Printable Report Sheet</button>
+                </div>
+
+                <div class="grid gap-6" style="grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));">
+                    <div class="glass-card flex flex-col gap-4">
+                        <h4 id="chartTitleWeekly">Discipline Performance (Historical Hours)</h4>
+                        <div id="svgBarChartContainer" style="height: 220px; display: flex; align-items: flex-end; justify-content: space-around; padding-top: 1rem;">
+                            </div>
+                    </div>
+
+                    <div class="glass-card flex flex-col gap-4">
+                        <h4 id="chartTitleSubjectAllocation">Subject Load Allocation Distribution</h4>
+                        <div style="height: 220px; display: flex; justify-content: center; align-items: center;" id="svgPieChartContainer">
+                            </div>
+                    </div>
+                </div>
+
+                <div class="glass-card">
+                    <h3 style="margin-bottom: 1rem;" id="lblAllLogsHistory">Exhaustive System Focus Session Audit Logs</h3>
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse; text-align: left;" id="tableFullAuditLogs">
+                            <thead>
+                                <tr style="border-bottom: 2px solid var(--border-color); color: var(--text-muted);">
+                                    <th style="padding: 0.75rem;">Subject</th>
+                                    <th style="padding: 0.75rem;">Date</th>
+                                    <th style="padding: 0.75rem;">Duration</th>
+                                    <th style="padding: 0.75rem;">Status</th>
+                                    <th style="padding: 0.75rem;">Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody id="fullAuditLogsTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="pane-settings" class="tab-pane hidden flex flex-col gap-6">
+                <div class="glass-card flex flex-col gap-4">
+                    <h3 id="lblAccountSettings">Security & Profile Modifications</h3>
+                    <div class="grid gap-4" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
+                        <div class="flex flex-col gap-1">
+                            <label id="lblChangePin">Modify 4-Digit Access PIN</label>
+                            <input type="password" id="settingsNewPin" class="input-field" maxlength="4" placeholder="New PIN Code">
+                        </div>
+                        <button class="btn btn-primary justify-center" onclick="updatePinCode()" style="align-self: flex-end;" id="btnUpdatePin">Update Security Pin</button>
+                    </div>
+                </div>
+
+                <div class="glass-card flex flex-col gap-4">
+                    <h3 id="lblLocalizationSettings">Localization & Visual Interface</h3>
+                    <div class="grid gap-4" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
+                        <div class="flex flex-col gap-1">
+                            <label id="lblSelectLanguage">Application Master Language</label>
+                            <select id="settingsLangSelect" class="input-field" onchange="toggleSystemLanguage(this.value)">
+                                <option value="en">English (US)</option>
+                                <option value="ar">العربية (Arabic)</option>
+                            </select>
+                        </div>
+                        <div class="flex flex-col gap-1">
+                            <label id="lblSelectTheme">Visual Theme Mode Layout</label>
+                            <select id="settingsThemeSelect" class="input-field" onchange="toggleSystemTheme(this.value)">
+                                <option value="dark">Dark Slate Glassmode</option>
+                                <option value="light">Light Crisp Minimalist</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card flex flex-col gap-4">
+                    <h3 id="lblBackupSettings">System Portability & Complete Backup Infrastructure</h3>
+                    <p style="font-size: 0.85rem; color: var(--text-muted);" id="lblBackupDesc">Export structures to a JSON layout object file for safe keeping, or load a preexisting dataset back to this instance completely offline.</p>
+                    <div class="flex gap-4" style="flex-wrap: wrap;">
+                        <button class="btn btn-success" onclick="exportSystemData()" id="btnBackupData">📥 Export Native JSON Backup</button>
+                        <button class="btn btn-primary" onclick="document.getElementById('importFileTrigger').click()" id="btnRestoreData">📤 Restore JSON Database</button>
+                        <input type="file" id="importFileTrigger" class="hidden" accept=".json" onchange="importSystemData(event)">
+                        <button class="btn btn-danger" onclick="purgeSystemClear()" id="btnPurgeSystem">⚠️ Factory Reset All Content</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="fullscreenFocus" class="hidden">
+        <button style="position: absolute; top: 2rem; right: 2rem; background: transparent; border: none; color: white; font-size: 2rem; cursor: pointer;" onclick="toggleFullscreenFocus()">✕</button>
+        <div style="text-align: center; color: white;">
+            <h1 id="fsSubjectLabel" style="font-size: 2rem; margin-bottom: 1rem; opacity: 0.8;">Active Task Focus Area</h1>
+            <div id="fsClockDigits" style="font-size: 8rem; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: 2px;">25:00</div>
+            <p id="fsQuote" style="margin-top: 2rem; font-size: 1.25rem; font-style: italic; max-width: 600px; opacity: 0.6; padding: 0 1rem;"></p>
+        </div>
+    </div>
+
+    <div id="calendarPlanModal" class="hidden flex items-center justify-center" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 1000; padding: 1rem;">
+        <div class="glass-card w-full" style="max-width: 450px; background: var(--bg-main);">
+            <h3 style="margin-bottom: 1.5rem;" id="lblModalTitle">Schedule New Study Target Calendar Event</h3>
+            <div class="flex flex-col gap-4">
+                <div class="flex flex-col gap-1">
+                    <label id="lblModalSubject">Discipline Subject Category</label>
+                    <select id="modalSubjectSelect" class="input-field"></select>
+                </div>
+                <div class="flex flex-col gap-1">
+                    <label id="lblModalTask">Target Goal Title Objective</label>
+                    <input type="text" id="modalTaskTitle" class="input-field" placeholder="e.g. Chapter 3 Review Exercise">
+                </div>
+                <div class="flex flex-col gap-1">
+                    <label id="lblModalDate">Target Calendar Timeline Date</label>
+                    <input type="date" id="modalTaskDate" class="input-field">
+                </div>
+                <div class="flex gap-4" style="margin-top: 1rem;">
+                    <button class="btn btn-success flex-1 justify-center" onclick="saveCalendarPlanEvent()" id="btnModalSave">Add Schedule</button>
+                    <button class="btn btn-secondary flex-1 justify-center" onclick="closePlanModal()" id="btnModalCancel">Dismiss</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const AudioEngine = {
+            ctx: null,
+            init() { if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)(); },
+            playNotification() {
+                this.init();
+                let osc = this.ctx.createOscillator();
+                let gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(587.33, this.ctx.currentTime); // D5 note
+                osc.frequency.setValueAtTime(880, this.ctx.currentTime + 0.15); // A5 note
+                gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.4);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.4);
+            }
+        };
+    </script>
+
+    <script>
+        const LocaleData = {
+            en: {
+                authSubtitle: "Secure Offline Study Suite", lblPin: "Enter your 4-Digit Access PIN", btnUnlock: "Unlock Dashboard",
+                btnForgot: "Forgot PIN?", btnCreateProfile: "Create Profile", regTitle: "Create Student Profile",
+                btnSubmitReg: "Register Locally", btnBackLogin: "Back to Login", forgotTitle: "Reset Access Security",
+                forgotHint: "Answer your configured security question to view parameters.", btnResetSubmit: "Verify & Save",
+                btnForgotBack: "Cancel", tabDash: "📊 Dashboard", tabFocus: "⏱️ Focus Clock", tabCal: "📅 Planner Calendar",
+                tabSubj: "📚 Subjects", tabAnly: "📈 Analytics", tabSett: "⚙️ Settings", btnLogOut: "Lock Panel",
+                cardTodayHours: "Today's Focus", cardStreak: "Current Streak", cardGoal: "Daily Goal Target",
+                cardBadges: "Unlocked Milestones", dashTargetTracking: "Target Multi-Level Milestones",
+                lblDailyProgress: "Daily Target Progress", lblWeeklyProgress: "Weekly Target Progress",
+                lblMonthlyProgress: "Monthly Target Progress", dashActiveBadge: "Current Rank", lblRecentSessions: "Recent Historical Focus Logs",
+                thSubject: "Subject", thDate: "Date", thDuration: "Duration", thStatus: "Status", lblTimerConfig: "Configuration Setup",
+                lblSelectSubject: "Target Core Subject", lblSelectMode: "Interval Mode Strategy", lblCustomMinutes: "Target Duration Minutes",
+                lblAudioToggle: "Enable Sound Signals", btnTriggerFullscreen: "🖥️ Enter Fullscreen Immersive",
+                lblSessionNotes: "Active Session Notes & Workspace Objectives", calendarNewPlan: "+ Add Objective Event",
+                lblAddNewSubject: "Add New Academic Discipline Subject", lblSubjName: "Subject Identification Title",
+                lblSubjTarget: "Target Workload Hours (Monthly)", lblSubjColor: "Theme Palette Color", btnSaveSubject: "Save System Discipline",
+                lblAnalyticsSuite: "Statistical Reporting Suite", btnPrintReport: "🖨️ Generate Printable Report Sheet",
+                chartTitleWeekly: "Discipline Performance (Historical Hours)", chartTitleSubjectAllocation: "Subject Load Allocation Distribution",
+                lblAllLogsHistory: "Exhaustive System Focus Session Audit Logs", lblAccountSettings: "Security & Profile Modifications",
+                lblChangePin: "Modify 4-Digit Access PIN", btnUpdatePin: "Update Security Pin", lblLocalizationSettings: "Localization & Visual Interface",
+                lblSelectLanguage: "Application Master Language", lblSelectTheme: "Visual Theme Mode Layout",
+                lblBackupSettings: "System Portability & Complete Backup Infrastructure", btnBackupData: "📥 Export Native JSON Backup",
+                btnRestoreData: "📤 Restore JSON Database", btnPurgeSystem: "⚠️ Factory Reset All Content",
+                lblModalTitle: "Schedule New Study Target Calendar Event", lblModalSubject: "Discipline Subject Category",
+                lblModalTask: "Target Goal Title Objective", lblModalDate: "Target Calendar Timeline Date",
+                btnModalSave: "Add Schedule", btnModalCancel: "Dismiss", pageTitleDash: "Dashboard Workspace",
+                pageTitleFocus: "Immersive Focus Countdown Screen", pageTitleCal: "Academic Planner Schedule Calendar",
+                pageTitleSubj: "Academic Subject Modules", pageTitleAnly: "Visual Analytics Portfolio Dashboard",
+                pageTitleSett: "System Master Parameters Panel"
+            },
+            ar: {
+                authSubtitle: "جناح الدراسة الآمن دون اتصال بالإنترنت", lblPin: "أدخل رمز PIN المكون من 4 أرقام", btnUnlock: "إلغاء قفل لوحة التحكم",
+                btnForgot: "نسيت رمز PIN؟", btnCreateProfile: "إنشاء ملف تعريف", regTitle: "إنشاء ملف تعريف الطالب",
+                btnSubmitReg: "تسجيل محلي", btnBackLogin: "العودة لتسجيل الدخول", forgotTitle: "إعادة تعيين أمان الوصول",
+                forgotHint: "أجب عن سؤال الأمان الذي قمت بتكوينه لتعديل المعايير.", btnResetSubmit: "التحقق والحفظ",
+                btnForgotBack: "إلغاء", tabDash: "📊 لوحة التحكم", tabFocus: "⏱️ ساعة التركيز", tabCal: "📅 تقويم التخطيط",
+                tabSubj: "📚 المواد الدراسية", tabAnly: "📈 التحليلات", tabSett: "⚙️ الإعدادات", btnLogOut: "قفل اللوحة",
+                cardTodayHours: "تركيز اليوم", cardStreak: "التوالي الحالي", cardGoal: "هدف اليوم المستهدف",
+                cardBadges: "الإنجازات المفتوحة", dashTargetTracking: "تتبع الأهداف متعددة المستويات",
+                lblDailyProgress: "تقدم الهدف اليومي", lblWeeklyProgress: "تقدم الهدف الأسبوعي",
+                lblMonthlyProgress: "تقدم الهدف الشهري", dashActiveBadge: "الرتبة الحالية", lblRecentSessions: "سجلات التركيز التاريخية الأخيرة",
+                thSubject: "المادة", thDate: "التاريخ", thDuration: "المدة", thStatus: "الحالة", lblTimerConfig: "إعدادات التكوين",
+                lblSelectSubject: "المادة الأساسية المستهدفة", lblSelectMode: "استراتيجية نمط المؤقت", lblCustomMinutes: "دقائق المدة المستهدفة",
+                lblAudioToggle: "تفعيل التنبيهات الصوتية", btnTriggerFullscreen: "🖥️ دخول وضع التركيز الكامل",
+                lblSessionNotes: "ملاحظات الجلسة النشطة وأهداف العمل", calendarNewPlan: "+ إضافة حدث مستهدف",
+                lblAddNewSubject: "إضافة مادة أكاديمية جديدة", lblSubjName: "عنوان المادة الدراسية",
+                lblSubjTarget: "ساعات العمل المستهدفة (شهرياً)", lblSubjColor: "لون لوحة السمات", btnSaveSubject: "حفظ المادة في النظام",
+                lblAnalyticsSuite: "جناح التقارير الإحصائية", btnPrintReport: "🖨️ توليد ورقة تقرير قابلة للطباعة",
+                chartTitleWeekly: "الأداء الأكاديمي (الساعات التاريخية)", chartTitleSubjectAllocation: "توزيع عبء العمل حسب المادة",
+                lblAllLogsHistory: "سجلات تدقيق جلسات التركيز الشاملة", lblAccountSettings: "تعديلات الأمان وملف التعريف",
+                lblChangePin: "تعديل رمز PIN المكون من 4 أرقام", btnUpdatePin: "تحديث رمز الأمان", lblLocalizationSettings: "التوطين والواجهة المرئية",
+                lblSelectLanguage: "لغة التطبيق الرئيسية", lblSelectTheme: "نمط المظهر المرئي",
+                lblBackupSettings: "نقل النظام والبنية التحتية الكاملة للنسخ الاحتياطي", btnBackupData: "📥 تصدير نسخة احتياطية JSON",
+                btnRestoreData: "📤 استعادة قاعدة بيانات JSON", btnPurgeSystem: "⚠️ إعادة ضبط المصنع لجميع المحتويات",
+                lblModalTitle: "جدولة حدث تقويم دراسي جديد", lblModalSubject: "فئة المادة الدراسية",
+                lblModalTask: "العنوان المستهدف للهدف", lblModalDate: "تاريخ الجدول الزمني للتقويم",
+                btnModalSave: "إضافة جدول", btnModalCancel: "تجاهل", pageTitleDash: "مساحة عمل لوحة التحكم",
+                pageTitleFocus: "شاشة العد التنازلي للتركيز الشمولي", pageTitleCal: "تقويم جدول المخطط الأكاديمي",
+                pageTitleSubj: "وحدات المواد الأكاديمية", pageTitleAnly: "محفظة التحليلات المرئية",
+                pageTitleSett: "لوحة معايير النظام الرئيسية"
+            }
+        };
+
+        const QuotesCollection = [
+            "Your focus determines your reality.",
+            "The secret of getting ahead is getting started.",
+            "Deep study transforms interest into expertise.",
+            "Don't stop until you are proud of your progress today.",
+            "Consistency beats intensity every single time."
+        ];
+    </script>
+
+    <script>
+        // Reactive Core Application State Database Object Engine Mapping
+        let DB = {
+            profile: null,
+            subjects: [
+                { id: "s1", title: "General Research", color: "#3b82f6", targetHours: 20 },
+                { id: "s2", title: "Mathematics", color: "#10b981", targetHours: 15 }
+            ],
+            sessions: [],
+            calendarPlans: [],
+            config: { lang: "en", theme: "dark" }
+        };
+
+        // Core App Lifecycle Handlers
+        window.addEventListener('DOMContentLoaded', () => {
+            loadDatabaseFromStorage();
+            initializeClockRuntime();
+            applySystemConfigSettings();
+            
+            if (DB.profile) {
+                switchAuthView('login');
+            } else {
+                switchAuthView('register');
+            }
+        });
+
+        function loadDatabaseFromStorage() {
+            const data = localStorage.getItem('edufocus_secure_db');
+            if (data) {
+                try {
+                    DB = JSON.parse(data);
+                } catch(e) { console.error("Database structural corruption clean reset execution cascading."); }
+            }
+        }
+
+        function persistDatabaseToStorage() {
+            localStorage.setItem('edufocus_secure_db', JSON.stringify(DB));
+        }
+
+        function initializeClockRuntime() {
+            setInterval(() => {
+                const now = new Date();
+                document.getElementById('liveClock').innerText = now.toLocaleTimeString();
+                document.getElementById('liveDate').innerText = now.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                
+                // Active focus ticking processor step tracking execution logic
+                if (TimerEngine.isActive && TimerEngine.mode !== 'stopwatch') {
+                    TimerEngine.tick();
+                } else if (TimerEngine.isActive && TimerEngine.mode === 'stopwatch') {
+                    TimerEngine.tickUp();
+                }
+            }, 1000);
+        }
+
+        // Auth Logic Execution Screen Routing Controllers
+        function switchAuthView(view) {
+            document.getElementById('loginFormView').classList.add('hidden');
+            document.getElementById('registerFormView').classList.add('hidden');
+            document.getElementById('forgotFormView').classList.add('hidden');
+
+            if (view === 'login') {
+                document.getElementById('loginFormView').classList.remove('hidden');
+            } else if (view === 'register') {
+                document.getElementById('registerFormView').classList.remove('hidden');
+            } else if (view === 'forgot') {
+                document.getElementById('forgotFormView').classList.remove('hidden');
+                if (DB.profile) {
+                    document.getElementById('securityQuestionDisplay').innerText = DB.profile.question;
+                }
+            }
+        }
+
+        function handleRegistration() {
+            const name = document.getElementById('regName').value.trim();
+            const pin = document.getElementById('regPin').value.trim();
+            const q = document.getElementById('regSecurityQ').value.trim();
+            const a = document.getElementById('regSecurityA').value.trim();
+
+            if (!name || pin.length !== 4 || !q || !a) {
+                alert("Please satisfy all profile setup variables completely.");
+                return;
+            }
+
+            DB.profile = { name, pin, question: q, answer: a };
+            persistDatabaseToStorage();
+            alert("Local Student Profile Constructed Successfully!");
+            switchAuthView('login');
+        }
+
+        function handleLogin() {
+            const enteredPin = document.getElementById('loginPin').value.trim();
+            if (DB.profile && DB.profile.pin === enteredPin) {
+                document.getElementById('authContainer').classList.add('hidden');
+                document.getElementById('appWorkspace').classList.remove('hidden');
+                document.getElementById('studentNameBadge').innerText = `${DB.profile.name}`;
+                renderDashboardMetrics();
+                populateSubjectSelectors();
+            } else {
+                alert("Invalid localized credentials validation sequence mismatch. Retry.");
+            }
+        }
+
+        function handleResetPin() {
+            const ans = document.getElementById('forgotAnswer').value.trim();
+            const npin = document.getElementById('newPin').value.trim();
+            
+            if (DB.profile && DB.profile.answer.toLowerCase() === ans.toLowerCase() && npin.length === 4) {
+                DB.profile.pin = npin;
+                persistDatabaseToStorage();
+                alert("Security PIN Restructured successfully.");
+                switchAuthView('login');
+            } else {
+                alert("Validation mismatched criteria failed.");
+            }
+        }
+
+        function logOut() {
+            document.getElementById('loginPin').value = '';
+            document.getElementById('appWorkspace').classList.add('hidden');
+            document.getElementById('authContainer').classList.remove('hidden');
+            switchAuthView('login');
+        }
+
+        // Tab Switching Infrastructure Layout
+        function switchTab(tabId, element) {
+            document.querySelectorAll('.tab-pane').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById(`pane-${tabId}`).classList.remove('hidden');
+            if (element) element.classList.add('active');
+
+            // Map standard titles
+            const titles = {
+                dashboard: DB.config.lang === 'en' ? LocaleData.en.pageTitleDash : LocaleData.ar.pageTitleDash,
+                focus: DB.config.lang === 'en' ? LocaleData.en.pageTitleFocus : LocaleData.ar.pageTitleFocus,
+                calendar: DB.config.lang === 'en' ? LocaleData.en.pageTitleCal : LocaleData.ar.pageTitleCal,
+                subjects: DB.config.lang === 'en' ? LocaleData.en.pageTitleSubj : LocaleData.ar.pageTitleSubj,
+                analytics: DB.config.lang === 'en' ? LocaleData.en.pageTitleAnly : LocaleData.ar.pageTitleAnly,
+                settings: DB.config.lang === 'en' ? LocaleData.en.pageTitleSett : LocaleData.ar.pageTitleSett
+            };
+            document.getElementById('pageTitle').innerText = titles[tabId];
+            
+            // Context triggers for charts and specific engines
+            if (tabId === 'dashboard') renderDashboardMetrics();
+            if (tabId === 'calendar') renderCalendarGrid();
+            if (tabId === 'subjects') renderSubjectsModule();
+            if (tabId === 'analytics') renderAnalyticsModule();
+            
+            // Random motivation context rotation sequence refresh
+            document.getElementById('motivationalQuote').innerText = `"${QuotesCollection[Math.floor(Math.random() * QuotesCollection.length)]}"`;
+        }
+
+        // ================= TIMER FOCUS CONTROLLER ENGINE =================
+        let TimerEngine = {
+            isActive: false,
+            mode: "pomodoro", 
+            durationLeft: 1500, // 25 mins
+            totalSelectedDuration: 1500,
+            stopwatchElapsed: 0,
+            intervalPointer: null,
+
+            tick() {
+                if (this.durationLeft > 0) {
+                    this.durationLeft--;
+                    this.updateUI();
+                } else {
+                    this.completeSessionSignal();
+                }
+            },
+            tickUp() {
+                this.stopwatchElapsed++;
+                this.updateUIStopwatch();
+            },
+            updateUI() {
+                let m = Math.floor(this.durationLeft / 60);
+                let s = this.durationLeft % 60;
+                let fmt = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+                document.getElementById('timerClockDigits').innerText = fmt;
+                document.getElementById('fsClockDigits').innerText = fmt;
+                
+                // SVG Offset mapping ring updates
+                let percent = this.durationLeft / this.totalSelectedDuration;
+                let offset = 628.318 * percent;
+                document.getElementById('timerProgressCircle').style.strokeDashoffset = offset;
+            },
+            updateUIStopwatch() {
+                let m = Math.floor(this.stopwatchElapsed / 60);
+                let s = this.stopwatchElapsed % 60;
+                let fmt = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+                document.getElementById('timerClockDigits').innerText = fmt;
+                document.getElementById('fsClockDigits').innerText = fmt;
+                document.getElementById('timerProgressCircle').style.strokeDashoffset = 0;
+            }
+        };
+
+        function setTimerStrategy(mode) {
+            TimerEngine.mode = mode;
+            document.getElementById('timerModeLabel').innerText = mode.toUpperCase();
+            if (mode === 'pomodoro') {
+                TimerEngine.durationLeft = 1500;
+                TimerEngine.totalSelectedDuration = 1500;
+            } else if (mode === 'deep') {
+                TimerEngine.durationLeft = 3000;
+                TimerEngine.totalSelectedDuration = 3000;
+            } else if (mode === 'stopwatch') {
+                TimerEngine.stopwatchElapsed = 0;
+            } else if (mode === 'custom') {
+                document.getElementById('customTimerInputs').classList.remove('hidden');
+                let customMins = parseInt(document.getElementById('customMinutesInput').value) || 30;
+                TimerEngine.durationLeft = customMins * 60;
+                TimerEngine.totalSelectedDuration = customMins * 60;
+            }
+            if (mode !== 'custom') document.getElementById('customTimerInputs').classList.add('hidden');
+            TimerEngine.updateUI();
+        }
+
+        function startCoreTimer() {
+            TimerEngine.isActive = true;
+            document.getElementById('btnClockStart').classList.add('hidden');
+            document.getElementById('btnClockPause').classList.remove('hidden');
+            if(document.getElementById('chkAudioAlerts').checked) AudioEngine.playNotification();
+        }
+
+        function pauseCoreTimer() {
+            TimerEngine.isActive = false;
+            document.getElementById('btnClockPause').classList.add('hidden');
+            document.getElementById('btnClockStart').classList.remove('hidden');
+        }
+
+        function stopCoreTimer() {
+            TimerEngine.isActive = false;
+            document.getElementById('btnClockPause').classList.add('hidden');
+            document.getElementById('btnClockStart').classList.remove('hidden');
+            
+            // Calculate actual minutes harvested duration logged inside session map parameters
+            let actualMinutes = 0;
+            if (TimerEngine.mode === 'stopwatch') {
+                actualMinutes = Math.round(TimerEngine.stopwatchElapsed / 60);
+            } else {
+                actualMinutes = Math.round((TimerEngine.totalSelectedDuration - TimerEngine.durationLeft) / 60);
+            }
+
+            if (actualMinutes >= 1) {
+                const subId = document.getElementById('timerSubjectSelect').value;
+                const note = document.getElementById('txtSessionNotes').value || "Completed task sequence study slice.";
+                const targetSub = DB.subjects.find(s => s.id === subId) || DB.subjects;
+
+                DB.sessions.push({
+                    subjectId: targetSub.id,
+                    subjectTitle: targetSub.title,
+                    date: new Date().toISOString().split('t') || new Date().toLocaleDateString('en-CA'),
+                    duration: actualMinutes,
+                    notes: note,
+                    status: "Success"
+                });
+                persistDatabaseToStorage();
+                alert(`Excellent job tracking! Session logged: ${actualMinutes} minute(s) added to workspace database.`);
+            } else {
+                alert("Session metrics data parameters duration less than localized limits. Session omitted from logs.");
+            }
+            
+            setTimerStrategy(TimerEngine.mode);
+            document.getElementById('txtSessionNotes').value = "";
+        }
+
+        function toggleFullscreenFocus() {
+            const fs = document.getElementById('fullscreenFocus');
+            if(fs.classList.contains('hidden')) {
+                fs.classList.remove('hidden');
+                document.getElementById('fsSubjectLabel').innerText = document.getElementById('timerSubjectSelect').options[document.getElementById('timerSubjectSelect').selectedIndex]?.text || "Study Discipline";
+                document.getElementById('fsQuote').innerText = document.getElementById('motivationalQuote').innerText;
+            } else {
+                fs.classList.add('hidden');
+            }
+        }
+
+        // ================= DASHBOARD CALCULATION SYSTEM MODULE =================
+        function renderDashboardMetrics() {
+            const todayStr = new Date().toISOString().split('T');
+            const todaySessions = DB.sessions.filter(s => s.date === todayStr);
+            const sumMinutes = todaySessions.reduce((acc, curr) => acc + curr.duration, 0);
+            const totalHoursToday = (sumMinutes / 60).toFixed(1);
+
+            document.getElementById('dashTodayHours').innerText = `${totalHoursToday} hrs`;
+            
+            // Calculate basic pseudo streak from sequential logs
+            let uniqueDates = [...new Set(DB.sessions.map(s => s.date))].sort().reverse();
+            let streak = 0;
+            if(uniqueDates.includes(todayStr)) streak = 1;
+            document.getElementById('dashStreak').innerText = `${streak} Day(s)`;
+
+            // Render overall progress bars dynamically relative to general milestones targets
+            let dailyGoal = 2.0; // 2 hour baseline default
+            let percentDaily = Math.min(Math.round(((sumMinutes / 60) / dailyGoal) * 100), 100);
+            document.getElementById('dashGoalProgress').innerText = `${percentDaily}%`;
+            document.getElementById('txtDailyGoalProgress').innerText = `${(sumMinutes/60).toFixed(1)} / ${dailyGoal} hrs`;
+            document.getElementById('barDailyProgress').style.width = `${percentDaily}%`;
+
+            // Badge validation structural calculation pipeline rules mechanics mapping
+            let totalEverMins = DB.sessions.reduce((a,c)=>a+c.duration, 0);
+            let badgesCount = 0;
+            if (totalEverMins >= 60) { badgesCount = 1; document.getElementById('badgeDisplayGraphic').innerText="🌱"; document.getElementById('badgeRankName').innerText="Initiate Apprentice"; }
+            if (totalEverMins >= 300) { badgesCount = 2; document.getElementById('badgeDisplayGraphic').innerText="📖"; document.getElementById('badgeRankName').innerText="Scholar Adept"; }
+            if (totalEverMins >= 1200) { badgesCount = 3; document.getElementById('badgeDisplayGraphic').innerText="🦅"; document.getElementById('badgeRankName').innerText="Grandmaster Focused Sage"; }
+            document.getElementById('dashBadgesCount').innerText = `${badgesCount} Badges`;
+
+            // Populate dashboard quick preview list
+            let logBody = document.getElementById('recentSessionsLogBody');
+            logBody.innerHTML = "";
+            let sliced = [...DB.sessions].reverse().slice(0, 4);
+            if(sliced.length === 0) {
+                logBody.innerHTML = `<tr><td colspan="4" style="padding:1rem; text-align:center; color:var(--text-muted);">No sessions tracked yet. Let's study!</td></tr>`;
+            } else {
+                sliced.forEach(s => {
+                    logBody.innerHTML += `
+                        <tr style="border-bottom:1px solid var(--border-color)">
+                            <td style="padding:0.75rem; font-weight:600;">${s.subjectTitle}</td>
+                            <td style="padding:0.75rem;">${s.date}</td>
+                            <td style="padding:0.75rem;">${s.duration} mins</td>
+                            <td style="padding:0.75rem; color:var(--success)">${s.status}</td>
+                        </tr>
+                    `;
+                });
+            }
+        }
+
+        function populateSubjectSelectors() {
+            let timerSel = document.getElementById('timerSubjectSelect');
+            let modalSel = document.getElementById('modalSubjectSelect');
+            timerSel.innerHTML = "";
+            modalSel.innerHTML = "";
+            DB.subjects.forEach(s => {
+                let opt = `<option value="${s.id}">${s.title}</option>`;
+                timerSel.innerHTML += opt;
+                modalSel.innerHTML += opt;
+            });
+        }
+
+        // ================= ACADEMIC SUBJECT MANAGEMENT COMPONENT MODULE =================
+        function renderSubjectsModule() {
+            let container = document.getElementById('subjectsCardWrapperGrid');
+            container.innerHTML = "";
+            DB.subjects.forEach(s => {
+                let matchSessions = DB.sessions.filter(se => se.subjectId === s.id);
+                let accumulatedMinutes = matchSessions.reduce((a,c)=>a+c.duration,0);
+                let actualHours = (accumulatedMinutes/60).toFixed(1);
+                let pct = Math.min(Math.round((parseFloat(actualHours)/s.targetHours)*100), 100) || 0;
+
+                container.innerHTML += `
+                    <div class="glass-card flex flex-col gap-4" style="border-left: 6px solid ${s.color};">
+                        <div class="flex justify-between items-center">
+                            <h3 style="font-weight:700;">${s.title}</h3>
+                            <button class="btn btn-danger" style="padding:0.25rem 0.5rem; font-size:0.75rem;" onclick="deleteSubject('${s.id}')">✕</button>
+                        </div>
+                        <div>
+                            <div class="flex justify-between" style="font-size:0.85rem; margin-bottom:0.25rem;">
+                                <span>Monthly Progress Balance</span>
+                                <span>${actualHours} / ${s.targetHours} hrs</span>
+                            </div>
+                            <div style="width:100%; height:6px; background:rgba(0,0,0,0.1); border-radius:3px; overflow:hidden;">
+                                <div style="width:${pct}%; height:100%; background:${s.color};"></div>
+                            </div>
+                            <span style="font-size:0.75rem; color:var(--text-muted); margin-top:0.25rem; display:block;">Completion Status: ${pct}%</span>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function createNewSubject() {
+            let title = document.getElementById('newSubjTitle').value.trim();
+            let hours = parseInt(document.getElementById('newSubjTargetHours').value) || 10;
+            let color = document.getElementById('newSubjColor').value;
+
+            if(!title) { alert("Please input structured subject title parameters."); return; }
+            DB.subjects.push({
+                id: 'sub_' + Date.now(),
+                title: title,
+                targetHours: hours,
+                color: color
+            });
+            persistDatabaseToStorage();
+            populateSubjectSelectors();
+            renderSubjectsModule();
+            document.getElementById('newSubjTitle').value = "";
+        }
+
+        function deleteSubject(id) {
+            if(confirm("Confirm removal of execution metrics mapping?")) {
+                DB.subjects = DB.subjects.filter(s => s.id !== id);
+                persistDatabaseToStorage();
+                populateSubjectSelectors();
+                renderSubjectsModule();
+            }
+        }
+
+        // ================= DYNAMIC SCHEDULING CALENDAR HANDLERS =================
+        let currentCalendarPointerDate = new Date();
+        
+        function renderCalendarGrid() {
+            let container = document.getElementById('calendarDaysContainer');
+            container.innerHTML = "";
+            let year = currentCalendarPointerDate.getFullYear();
+            let month = currentCalendarPointerDate.getMonth();
+            
+            document.getElementById('calendarMonthYearDisplay').innerText = currentCalendarPointerDate.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+
+            let firstDayIndex = new Date(year, month, 1).getDay();
+            let totalDays = new Date(year, month + 1, 0).getDate();
+
+            // Fill empty grid cells leading to month first day matching index location map matrix
+            for(let i=0; i<firstDayIndex; i++) {
+                container.innerHTML += `<div style="opacity:0.2; padding:5px; min-height:90px; border:1px solid var(--border-color);"></div>`;
+            }
+
+            // Build structural dynamic day mapping metrics dashboard framework block sets
+            for(let day=1; day<=totalDays; day++) {
+                let lookupStr = `${year}-${(month+1).toString().padStart(2,'0')}-${day.toString().padStart(2,'0')}`;
+                let matches = DB.calendarPlans.filter(p => p.date === lookupStr);
+
+                let plansHtml = "";
+                matches.forEach(m => {
+                    let parentSub = DB.subjects.find(s=>s.id === m.subjectId) || { color: '#3b82f6' };
+                    plansHtml += `<div style="font-size:0.7rem; background:${parentSub.color}; color:white; padding:2px 4px; border-radius:3px; margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${m.title}</div>`;
+                });
+
+                container.innerHTML += `
+                    <div class="calendar-day flex flex-col">
+                        <span style="font-weight:700; font-size:0.85rem;">${day}</span>
+                        <div style="flex:1; overflow-y:auto; max-height:60px;">${plansHtml}</div>
+                    </div>
+                `;
+            }
+        }
+
+        function adjustCalendarMonth(dir) {
+            currentCalendarPointerDate.setMonth(currentCalendarPointerDate.getMonth() + dir);
+            renderCalendarGrid();
+        }
+
+        function openPlanModal() {
+            document.getElementById('calendarPlanModal').classList.remove('hidden');
+            document.getElementById('modalTaskDate').value = new Date().toISOString().split('T');
+        }
+
+        function closePlanModal() {
+            document.getElementById('calendarPlanModal').classList.add('hidden');
+        }
+
+        function saveCalendarPlanEvent() {
+            let subId = document.getElementById('modalSubjectSelect').value;
+            let title = document.getElementById('modalTaskTitle').value.trim();
+            let date = document.getElementById('modalTaskDate').value;
+
+            if(!title || !date) { alert("Missing operational target variables for scheduling matrix logic."); return; }
+            DB.calendarPlans.push({ subjectId: subId, title: title, date: date });
+            persistDatabaseToStorage();
+            closePlanModal();
+            renderCalendarGrid();
+            document.getElementById('modalTaskTitle').value = "";
+        }
+
+        // ================= ANALYTICS PORTFOLIO GRAPHICS GENERATORS =================
+        function renderAnalyticsModule() {
+            // Build Pure SVG Graphic Columns Component Framework mapping dynamically
+            let barContainer = document.getElementById('svgBarChartContainer');
+            barContainer.innerHTML = "";
+            
+            // Map last 5 dynamic entries output values metrics data maps
+            let structuralLimitLogs = DB.sessions.slice(-5);
+            if(structuralLimitLogs.length === 0) {
+                barContainer.innerHTML = `<span style="color:var(--text-muted); font-size:0.85rem; padding: 3rem 0;">Log data sparse. Chart metrics generate dynamically with subsequent tracking.</span>`;
+            } else {
+                structuralLimitLogs.forEach(l => {
+                    let hFactor = Math.min(l.duration * 2, 180); // clamp max sizing height factor representation mapping 
+                    let parentSub = DB.subjects.find(s=>s.id === l.subjectId) || { color: 'var(--primary)' };
+                    barContainer.innerHTML += `
+                        <div class="flex flex-col items-center gap-2" style="height:100%; justify-content:flex-end;">
+                            <div style="width:32px; height:${hFactor}px; background:${parentSub.color}; border-radius:4px 4px 0 0; transition:height 0.5s;" title="${l.duration} mins"></div>
+                            <span style="font-size:0.65rem; width:45px; text-align:center; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${l.subjectTitle}</span>
+                        </div>
+                    `;
+                });
+            }
+
+            // Populate pure block linear segments structural data table summary for audit validation execution log sets
+            let auditBody = document.getElementById('fullAuditLogsTableBody');
+            auditBody.innerHTML = "";
+            if(DB.sessions.length === 0) {
+                auditBody.innerHTML = `<tr><td colspan="5" style="padding:1rem; text-align:center; color:var(--text-muted);">No records discovered yet. Complete an operational study session above.</td></tr>`;
+            } else {
+                [...DB.sessions].reverse().forEach(s => {
+                    auditBody.innerHTML += `
+                        <tr style="border-bottom:1px solid var(--border-color)">
+                            <td style="padding:0.75rem; font-weight:600;">${s.subjectTitle}</td>
+                            <td style="padding:0.75rem;">${s.date}</td>
+                            <td style="padding:0.75rem;">${s.duration} mins</td>
+                            <td style="padding:0.75rem; color:var(--success)">${s.status}</td>
+                            <td style="padding:0.75rem; font-size:0.85rem; color:var(--text-muted);">${s.notes}</td>
+                        </tr>
+                    `;
+                });
+            }
+
+            // Direct mapping pie approximation system summary render module
+            let pieContainer = document.getElementById('svgPieChartContainer');
+            pieContainer.innerHTML = "";
+            if (DB.subjects.length > 0) {
+                DB.subjects.forEach(s => {
+                    let count = DB.sessions.filter(se => se.subjectId === s.id).reduce((a,c)=>a+c.duration,0);
+                    if (count > 0) {
+                        pieContainer.innerHTML += `
+                            <div class="flex items-center gap-2" style="background:rgba(0,0,0,0.05); padding:0.5rem; border-radius:0.5rem; margin:2px;">
+                                <div style="width:12px; height:12px; background:${s.color}; border-radius:50%;"></div>
+                                <span style="font-size:0.8rem; font-weight:600;">${s.title} (${count}m)</span>
+                            </div>
+                        `;
+                    }
+                });
+                if(!pieContainer.innerHTML) {
+                    pieContainer.innerHTML = `<span style="color:var(--text-muted); font-size:0.85rem;">No registered dynamic core duration tracks yet.</span>`;
+                }
+            }
+        }
+
+        // ================= CONFIGURATIONS PARAMETERS HANDLERS =================
+        function updatePinCode() {
+            let npin = document.getElementById('settingsNewPin').value.trim();
+            if(npin.length === 4 && DB.profile) {
+                DB.profile.pin = npin;
+                persistDatabaseToStorage();
+                alert("PIN validation altered securely.");
+                document.getElementById('settingsNewPin').value = "";
+            } else {
+                alert("Ensure your parameters strictly track a 4-Digit criteria code layout.");
+            }
+        }
+
+        function toggleSystemTheme(theme) {
+            DB.config.theme = theme;
+            persistDatabaseToStorage();
+            applySystemConfigSettings();
+        }
+
+        function toggleSystemLanguage(lang) {
+            DB.config.lang = lang;
+            persistDatabaseToStorage();
+            applySystemConfigSettings();
+        }
+
+        function applySystemConfigSettings() {
+            // Document Framework direction management toggle triggers execution layout
+            if(DB.config.theme === 'light') {
+                document.documentElement.classList.remove('dark');
+                document.documentElement.classList.add('light');
+                document.getElementById('settingsThemeSelect').value = "light";
+            } else {
+                document.documentElement.classList.remove('light');
+                document.documentElement.classList.add('dark');
+                document.getElementById('settingsThemeSelect').value = "dark";
+            }
+
+            const lang = DB.config.lang || 'en';
+            document.documentElement.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
+            document.documentElement.setAttribute('lang', lang);
+            document.getElementById('settingsLangSelect').value = lang;
+
+            // Render explicit dynamic string translation bindings dictionary sets
+            const dict = LocaleData[lang];
+            document.getElementById('authSubtitle').innerText = dict.authSubtitle;
+            document.getElementById('lblPin').innerText = dict.lblPin;
+            document.getElementById('btnLogin').innerText = dict.btnUnlock;
+            document.getElementById('btnForgot').innerText = dict.btnForgot;
+            document.getElementById('btnCreateProfile').innerText = dict.btnCreateProfile;
+            document.getElementById('regTitle').innerText = dict.regTitle;
+            document.getElementById('btnSubmitReg').innerText = dict.btnSubmitReg;
+            document.getElementById('btnBackLogin').innerText = dict.btnBackLogin;
+            document.getElementById('forgotTitle').innerText = dict.forgotTitle;
+            document.getElementById('forgotHint').innerText = dict.forgotHint;
+            document.getElementById('btnResetSubmit').innerText = dict.btnResetSubmit;
+            document.getElementById('btnForgotBack').innerText = dict.btnForgotBack;
+            
+            document.getElementById('tabDash').innerHTML = `<span class="icon">📊</span> <span class="nav-text">${dict.tabDash}</span>`;
+            document.getElementById('tabFocus').innerHTML = `<span class="icon">⏱️</span> <span class="nav-text">${dict.tabFocus}</span>`;
+            document.getElementById('tabCal').innerHTML = `<span class="icon">📅</span> <span class="nav-text">${dict.tabCal}</span>`;
+            document.getElementById('tabSubj').innerHTML = `<span class="icon">📚</span> <span class="nav-text">${dict.tabSubj}</span>`;
+            document.getElementById('tabAnly').innerHTML = `<span class="icon">📈</span> <span class="nav-text">${dict.tabAnly}</span>`;
+            document.getElementById('tabSett').innerHTML = `<span class="icon">⚙️</span> <span class="nav-text">${dict.tabSett}</span>`;
+            document.getElementById('btnLogOut').innerText = dict.btnLogOut;
+
+            document.getElementById('cardTodayHours').innerText = dict.cardTodayHours;
+            document.getElementById('cardStreak').innerText = dict.cardStreak;
+            document.getElementById('cardGoal').innerText = dict.cardGoal;
+            document.getElementById('cardBadges').innerText = dict.cardBadges;
+            document.getElementById('dashTargetTracking').innerText = dict.dashTargetTracking;
+            document.getElementById('lblDailyProgress').innerText = dict.lblDailyProgress;
+            document.getElementById('lblWeeklyProgress').innerText = dict.lblWeeklyProgress;
+            document.getElementById('lblMonthlyProgress').innerText = dict.lblMonthlyProgress;
+            document.getElementById('dashActiveBadge').innerText = dict.dashActiveBadge;
+            document.getElementById('lblRecentSessions').innerText = dict.lblRecentSessions;
+
+            document.getElementById('thSubject').innerText = dict.thSubject;
+            document.getElementById('thDate').innerText = dict.thDate;
+            document.getElementById('thDuration').innerText = dict.thDuration;
+            document.getElementById('thStatus').innerText = dict.thStatus;
+
+            document.getElementById('lblTimerConfig').innerText = dict.lblTimerConfig;
+            document.getElementById('lblSelectSubject').innerText = dict.lblSelectSubject;
+            document.getElementById('lblSelectMode').innerText = dict.lblSelectMode;
+            document.getElementById('lblCustomMinutes').innerText = dict.lblCustomMinutes;
+            document.getElementById('lblAudioToggle').innerText = dict.lblAudioToggle;
+            document.getElementById('btnTriggerFullscreen').innerText = dict.btnTriggerFullscreen;
+            document.getElementById('lblSessionNotes').innerText = dict.lblSessionNotes;
+
+            document.getElementById('btnNewPlan').innerText = dict.calendarNewPlan;
+            document.getElementById('lblAddNewSubject').innerText = dict.lblAddNewSubject;
+            document.getElementById('lblSubjName').innerText = dict.lblSubjName;
+            document.getElementById('lblSubjTarget').innerText = dict.lblSubjTarget;
+            document.getElementById('lblSubjColor').innerText = dict.lblSubjColor;
+            document.getElementById('btnSaveSubject').innerText = dict.btnSaveSubject;
+
+            document.getElementById('lblAnalyticsSuite').innerText = dict.lblAnalyticsSuite;
+            document.getElementById('btnPrintReport').innerText = dict.btnPrintReport;
+            document.getElementById('chartTitleWeekly').innerText = dict.chartTitleWeekly;
+            document.getElementById('chartTitleSubjectAllocation').innerText = dict.chartTitleSubjectAllocation;
+            document.getElementById('lblAllLogsHistory').innerText = dict.lblAllLogsHistory;
+
+            document.getElementById('lblAccountSettings').innerText = dict.lblAccountSettings;
+            document.getElementById('lblChangePin').innerText = dict.lblChangePin;
+            document.getElementById('btnUpdatePin').innerText = dict.btnUpdatePin;
+            document.getElementById('lblLocalizationSettings').innerText = dict.lblLocalizationSettings;
+            document.getElementById('lblSelectLanguage').innerText = dict.lblSelectLanguage;
+            document.getElementById('lblSelectTheme').innerText = dict.lblSelectTheme;
+            document.getElementById('lblBackupSettings').innerText = dict.lblBackupSettings;
+            document.getElementById('btnBackupData').innerText = dict.btnBackupData;
+            document.getElementById('btnRestoreData').innerText = dict.btnRestoreData;
+            document.getElementById('btnPurgeSystem').innerText = dict.btnPurgeSystem;
+
+            document.getElementById('lblModalTitle').innerText = dict.lblModalTitle;
+            document.getElementById('lblModalSubject').innerText = dict.lblModalSubject;
+            document.getElementById('lblModalTask').innerText = dict.lblModalTask;
+            document.getElementById('lblModalDate').innerText = dict.lblModalDate;
+            document.getElementById('btnModalSave').innerText = dict.btnModalSave;
+            document.getElementById('btnModalCancel').innerText = dict.btnModalCancel;
+        }
+
+        // Data Storage Export Portability Engine Functions
+        function exportSystemData() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(DB, null, 2));
+            const dlAnchor = document.createElement('a');
+            dlAnchor.setAttribute("href", dataStr);
+            dlAnchor.setAttribute("download", "edufocus_secure_backup.json");
+            document.body.appendChild(dlAnchor);
+            dlAnchor.click();
+            dlAnchor.remove();
+        }
+
+        function importSystemData(event) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const parsed = JSON.parse(e.target.result);
+                    if(parsed.profile && parsed.subjects) {
+                        DB = parsed;
+                        persistDatabaseToStorage();
+                        alert("Database configuration infrastructure restored perfectly!");
+                        window.location.reload();
+                    } else {
+                        alert("Invalid structural integrity payload found mapping parameters layout object definitions.");
+                    }
+                } catch(err) {
+                    alert("Failure parse verification mapping logic pipeline broken execution matrix.");
+                }
+            };
+            reader.readAsText(event.target.files);
+        }
+
+        function purgeSystemClear() {
+            if(confirm("DANGER: This action completely wipes all local study sessions, custom configurations, profiles and subjects irreversibly. Proceed?")) {
+                localStorage.removeItem('edufocus_secure_db');
+                alert("System parameters initialized to structural baseline zero.");
+                window.location.reload();
+            }
+        }
+    </script>
+</body>
+</html>
